@@ -22,21 +22,21 @@ typedef struct  {
 }DuplicatedObject;
 
 
-int currentStage = 2;
+int currentStage = 0;
 ScenePtr currentScene = nullptr;
 
 
 
 class Item : public Object {
 public:
-	static ObjectPtr create(const string& image, ScenePtr scene = nullptr, int x = 0, int y = 0) {
-		auto object = ObjectPtr(new Item(image, scene, x, y));
+	static ObjectPtr create(const string& image, ScenePtr scene = nullptr, int x = 0, int y = 0, bool shown = true) {
+		auto object = ObjectPtr(new Item(image, scene, x, y, shown));
 		Object::add(object);
 		return object;
 	}
 
 protected:
-	Item(const string& image, ScenePtr scene, int x, int y) : Object(image, scene, x, y, true) {}
+	Item(const string& image, ScenePtr scene, int x, int y, bool shown) : Object(image, scene, x, y, shown) {}
 
 public:
 	virtual bool onMouse(int x, int y, MouseAction action) {
@@ -63,7 +63,7 @@ protected:
 public:
 	virtual bool onMouse(int x, int y, MouseAction action) {
 		if (!Object::onMouse(x, y, action)) {
-			//currentScene = sceneToMove;
+			currentScene = sceneToMove;
 			sceneToMove->enter();
 		} return true;
 	}
@@ -87,9 +87,6 @@ private:
 	const int MAX_COUNT = 20;
 	ScenePtr nextScene;
 	ObjectPtr reward;
-
-
-	
 
 public:
 	Puzzle(ScenePtr s, int x, int xd, int y, int yd, int n, ScenePtr next, ObjectPtr reward) : scene(s), x(x), xd(xd), y(y), yd(yd), num(n), sqrtN(sqrt(num)), nextScene(next), reward(reward) {
@@ -125,6 +122,7 @@ public:
 	void locate_puzzle(ObjectPtr object, ScenePtr scene, int i, int n, int x, int xd, int y, int yd);
 	bool isMoved(puzzlePiece& p, puzzlePiece& b);
 	void mix_puzzle();
+	void resetting();
 	void isSolved();
 };
 
@@ -199,13 +197,25 @@ void Puzzle::mix_puzzle() {
 	timer->start();
 
 }
-void Puzzle::isSolved() {
+void Puzzle::resetting() {
 	for (int i = 1; i < num; i++) {
+		board[i].location = i;
+		locate_puzzle(board[i].object, scene, i, sqrtN, x, xd, y, yd);
+		board[i].object->hide();
+	}
+	blank.location = num;
+	locate_puzzle(blank.object, scene, num, sqrtN, x, xd, y, yd);
+	blank.object->hide();
+
+	return;
+}
+void Puzzle::isSolved() {
+	for (int i = 1; i <= num; i++) {
 		if (board[i].location != i) return;
 	}
 
-	board[num].object->show();
-	reward->locate(scene, 550, 400); reward->setScale(0.5f);
+	blank.object->show();
+	reward->show();
 	showMessage("Puzzle Complete!\nPick the map.");
 
 	
@@ -363,12 +373,12 @@ int main() {
 	// count item
 	for (int i = 0; i < MaxItem; i++) {
 		itemARR[i]->setOnMouseCallback([&](ObjectPtr, int, int, MouseAction) -> bool {
-			cout << sceneARR[1] << "   " << sceneARR[2] << endl;
 			item_count++;
 			if (item_count == MaxItem) {
 				godel.object->hide();
 				list.object->hide();
 				clearStage(sceneARR[2]);
+
 			}
 
 			return false;
@@ -426,14 +436,11 @@ int main() {
 
 			A[i]->setOnMouseCallback([=](ObjectPtr, int, int, MouseAction) -> bool {
 				if (i == 3) {
-					currentScene->enter();
+					(godel.scene == scene1_1) ? scene1_1->enter() : scene1_2->enter();
 				}
 				else {
-					auto failScene = Object::create("images/fail.png", currentScene);
-					failScene->setOnMouseCallback([](ObjectPtr, int, int, MouseAction) -> bool {
-						endGame();
-						return true;
-						});
+					auto failScene = Scene::create("Stage 1", "images/fail.png");
+					failScene->enter();
 				}  return true;
 				});
 		}  return true;
@@ -490,25 +497,57 @@ int main() {
 
 		//main scene
 	auto scene3 = Scene::create("Stage 3", "images/stage3/main scene.png");
-
-	auto map = Item::create("images/item/map.png");
-
 	auto puzzleScene = Scene::create("Puzzle", "images/puzzle/background.jpg");
+	
+	auto start = Object::create("images/puzzle/start.png", puzzleScene, 550, 350);
+	auto restart = Object::create("images/puzzle/restartbutton.jpg", puzzleScene, 550, 330, false);
+	restart->setScale(0.7f);
+
+	auto map = Item::create("images/item/map.png", puzzleScene, 530, 300, false); map->setScale(0.2f);
+
 	Puzzle puzzle(puzzleScene, 713, 106, 519, 158, 16, scene3, map);
 	sceneARR[3] = puzzleScene;
 
-	auto start = Object::create("images/puzzle/start.png", puzzle.scene, 550, 350);
 	start->setOnMouseCallback([&](ObjectPtr object, int x, int y, MouseAction action)->bool {
 		for (int j = 1; j < puzzle.num; j++)
 			puzzle.board[j].object->show();
 		puzzle.mix_puzzle();
 		start->hide();
+		restart->show();
 		return true;
 		});
 
+	restart->setOnMouseCallback([&](ObjectPtr, int, int, MouseAction)->bool {
+		puzzle.resetting();
+		restart->hide();
+		start->show();
+		return true;
+		});
+
+
+	static bool zoomMap = false;
 	map->setOnMouseCallback([&](ObjectPtr, int, int, MouseAction)->bool {
-		map->locate(scene3, 1180, 30); map->setScale(0.3f);
-		scene3->enter(); return true;
+
+		if (currentScene == puzzleScene) {
+			map->locate(scene3, 1180, 30); map->setScale(0.1f);
+			scene3->enter();
+			currentScene = scene3;
+		}
+		
+		else if (currentScene == scene3) {
+			if (!zoomMap) {
+				map->locate(scene3, 500, 0);
+				map->setScale(1.f);
+				zoomMap = true;
+			}
+			else {
+				map->locate(scene3, 1180, 30);
+				map->setScale(0.1f);
+				zoomMap = false;
+			}
+		}
+		
+		return true;
 		});
 
 	auto timer = Timer::create(100.f);
@@ -633,7 +672,7 @@ int main() {
 		auto story = Object::create("images/story.jpg", home);
 		story->setOnMouseCallback([&](ObjectPtr object, int, int, MouseAction) -> bool {
 			object->hide();
-			startStage(sceneARR[3]);  return true;
+			startStage(sceneARR[1]);  return true;
 			});  return true;
 		});
 
