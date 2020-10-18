@@ -13,7 +13,7 @@
 
 
 
-stage 게임 예시
+- stage 게임 예시
 
 <img width="641" alt="KakaoTalk_20201019_014837177" src="https://user-images.githubusercontent.com/70556633/96374608-b135b200-11ae-11eb-8d17-bdda5d15e1e6.png">
 
