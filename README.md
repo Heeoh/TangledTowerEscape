@@ -1,7 +1,12 @@
 ## TangledTowerEscape
 
 방탈출 라이브러리를 이용한 탈출게임입니다.
+
+stage를 모두 clear 하여 가델로부터 라푼젤을 구해주세요!!
+
 <img width="641" alt="KakaoTalk_20201019_014651085" src="https://user-images.githubusercontent.com/70556633/96374602-ad099480-11ae-11eb-8499-89b3fe1f12ba.png">
+
+
 
 <img width="641" alt="KakaoTalk_20201019_014708340" src="https://user-images.githubusercontent.com/70556633/96374606-b0048500-11ae-11eb-8014-f3490f0619bc.png">
 
