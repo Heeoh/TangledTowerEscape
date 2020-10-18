@@ -19,3 +19,5 @@
 
 <img width="641" alt="KakaoTalk_20201019_015009751" src="https://user-images.githubusercontent.com/70556633/96374616-b561cf80-11ae-11eb-8360-fa91362f676f.png">
 
+
+stage 배경사진 및 item 출처 - Artstation .  https://ppholic.artstation.com/projects/Jlavqa#top.
